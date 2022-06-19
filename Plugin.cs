@@ -13,7 +13,7 @@ namespace ObjectPing
     public class ObjectPingPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ObjectPing";
-        internal const string ModVersion = "1.0.0";
+        internal const string ModVersion = "2.0.0";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -28,7 +28,6 @@ namespace ObjectPing
             { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
 
         internal static GameObject Placementmarkercopy = new ("PingPrefab");
-        internal static GameObject visualEffect = new("PingVisualEffect");
 
         public void Awake()
         {

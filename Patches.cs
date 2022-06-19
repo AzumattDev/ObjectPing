@@ -15,17 +15,17 @@ static class ZNetScene_Awake_Patch
                 Object.Instantiate(p.m_placeMarker);
 
         /* Create the marker for ping and set the parent to our main GO */
-        GameObject? PingPrefab = new("PingPlacementMarker");
-        PingPrefab = Object.Instantiate(p.m_placementMarkerInstance, Placementmarkercopy?.transform, true);
+        GameObject PingPrefab = new("PingPlacementMarker");
+        PingPrefab = Object.Instantiate(p.m_placementMarkerInstance, Placementmarkercopy.transform, true);
 
         /* Clone the sledge hit for the ping visual effect and set the parent to our main GO */
         GameObject fetch = __instance.GetPrefab("vfx_sledge_hit");
         GameObject fetch2 = fetch.transform.Find("waves").gameObject;
-        visualEffect = Object.Instantiate(fetch2, Placementmarkercopy?.transform, true);
+        visualEffect = Object.Instantiate(fetch2, Placementmarkercopy.transform, true);
 
 
         /* Add components to the main prefab */
-        TimedDestruction? timedDestruction = Placementmarkercopy?.AddComponent<TimedDestruction>();
+        TimedDestruction timedDestruction = Placementmarkercopy.AddComponent<TimedDestruction>();
         Placementmarkercopy.AddComponent<ZNetView>();
         timedDestruction.m_triggerOnAwake = true;
         timedDestruction.m_timeout = 5f;

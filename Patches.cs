@@ -28,7 +28,8 @@ static class ZNetScene_Awake_Patch
         timedDestruction.m_timeout = 5f;
 
         /* Create the marker for ping and set the parent to our main GO */
-        Object.Instantiate(p.m_placementMarkerInstance, Placementmarkercopy.transform, false);
+        Object.Instantiate(p.m_placementMarkerInstance, Placementmarkercopy.transform, false).transform
+            .localPosition = Vector3.zero;
 
         /* Clone the sledge hit for the ping visual effect and set the parent to our main GO */
         GameObject fetch = __instance.GetPrefab("vfx_sledge_hit");
@@ -40,24 +41,6 @@ static class ZNetScene_Awake_Patch
             Placementmarkercopy);
     }
 }
-
-/*[HarmonyPatch(typeof(Player), nameof(Player.OnSpawned))]
-static class PlayerOnSpawnedPatch
-{
-    static void Postfix(Player __instance)
-    {
-        if (ObjectPingPlugin.Placementmarkercopy != null) return;
-        if (__instance.m_placementMarkerInstance == null)
-            __instance.m_placementMarkerInstance =
-                Object.Instantiate(__instance.m_placeMarker, Hud.m_instance.m_rootObject.transform);
-        ObjectPingPlugin.Placementmarkercopy = Object.Instantiate(__instance.m_placementMarkerInstance,
-            Hud.m_instance.m_rootObject.transform);
-        ObjectPingPlugin.Placementmarkercopy.AddComponent<TimedDestruction>();
-        TimedDestruction? t = ObjectPingPlugin.Placementmarkercopy.GetComponent<TimedDestruction>();
-        t.m_triggerOnAwake = true;
-        t.m_timeout = 5f;
-    }
-}*/
 
 [HarmonyPatch(typeof(Hud), nameof(Hud.UpdateCrosshair))]
 static class PlayerUpdatePatch
@@ -118,15 +101,14 @@ static class PlayerUpdatePatch
         Vector3 point = raycastHit.point;
         ObjectPingLogger.LogDebug(
             $"You targeted {raycastHit.collider.transform.root.gameObject.name.Replace("(Clone)", "")}");
-        Object.Instantiate(
-            Placementmarkercopy, point,
-            Quaternion.identity);
 
-        /*GameObject fetch = ZNetScene.instance.GetPrefab("PingPrefab");
-
+        GameObject fetch = ZNetScene.instance.GetPrefab("PingPrefab");
+        Quaternion quaternion = Quaternion.Euler(0.0f, 22.5f * (float)16, 0.0f);
 
         Object.Instantiate(
-            fetch, point,
-            Quaternion.identity);*/
+                fetch, point,
+                Quaternion.identity).transform.rotation =
+            Quaternion.LookRotation(Vector3.forward, quaternion * Vector3.forward);
+        ;
     }
 }

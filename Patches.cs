@@ -7,28 +7,33 @@ namespace ObjectPing;
 [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
 static class ZNetScene_Awake_Patch
 {
+    private static GameObject visualEffect = new("PingVisualEffect");
+
     static void Postfix(ZNetScene __instance)
     {
-        Player p = new();
+        GameObject container = new("PingPlacementMarker Container");
+        container.SetActive(false);
+
+        Player? p = Game.instance.m_playerPrefab.GetComponent<Player>();
         if (p.m_placementMarkerInstance == null)
             p.m_placementMarkerInstance =
-                Object.Instantiate(p.m_placeMarker);
+                Object.Instantiate(p.m_placeMarker, container.transform, false);
+
+        Placementmarkercopy = new GameObject("PingPrefab");
+        Placementmarkercopy.transform.SetParent(container.transform);
+        /* Add components to the main prefab */
+        Placementmarkercopy.AddComponent<ZNetView>();
+        TimedDestruction timedDestruction = Placementmarkercopy.AddComponent<TimedDestruction>();
+        timedDestruction.m_triggerOnAwake = true;
+        timedDestruction.m_timeout = 5f;
 
         /* Create the marker for ping and set the parent to our main GO */
-        GameObject PingPrefab = new("PingPlacementMarker");
-        PingPrefab = Object.Instantiate(p.m_placementMarkerInstance, Placementmarkercopy.transform, true);
+        Object.Instantiate(p.m_placementMarkerInstance, Placementmarkercopy.transform, false);
 
         /* Clone the sledge hit for the ping visual effect and set the parent to our main GO */
         GameObject fetch = __instance.GetPrefab("vfx_sledge_hit");
         GameObject fetch2 = fetch.transform.Find("waves").gameObject;
-        visualEffect = Object.Instantiate(fetch2, Placementmarkercopy.transform, true);
-
-
-        /* Add components to the main prefab */
-        TimedDestruction timedDestruction = Placementmarkercopy.AddComponent<TimedDestruction>();
-        Placementmarkercopy.AddComponent<ZNetView>();
-        timedDestruction.m_triggerOnAwake = true;
-        timedDestruction.m_timeout = 5f;
+        visualEffect = Object.Instantiate(fetch2, Placementmarkercopy.transform, false);
 
         /* Add that shit to ZNetScene */
         __instance.m_namedPrefabs.Add(Placementmarkercopy.name.GetStableHashCode(),

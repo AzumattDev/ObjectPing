@@ -1,9 +1,42 @@
 ﻿using HarmonyLib;
 using UnityEngine;
+using static ObjectPing.ObjectPingPlugin;
 
 namespace ObjectPing;
 
-[HarmonyPatch(typeof(Player), nameof(Player.OnSpawned))]
+[HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
+static class ZNetScene_Awake_Patch
+{
+    static void Postfix(ZNetScene __instance)
+    {
+        Player p = new();
+        if (p.m_placementMarkerInstance == null)
+            p.m_placementMarkerInstance =
+                Object.Instantiate(p.m_placeMarker);
+
+        /* Create the marker for ping and set the parent to our main GO */
+        GameObject? PingPrefab = new("PingPlacementMarker");
+        PingPrefab = Object.Instantiate(p.m_placementMarkerInstance, Placementmarkercopy?.transform, true);
+
+        /* Clone the sledge hit for the ping visual effect and set the parent to our main GO */
+        GameObject fetch = __instance.GetPrefab("vfx_sledge_hit");
+        GameObject fetch2 = fetch.transform.Find("waves").gameObject;
+        visualEffect = Object.Instantiate(fetch2, Placementmarkercopy?.transform, true);
+
+
+        /* Add components to the main prefab */
+        TimedDestruction? timedDestruction = Placementmarkercopy?.AddComponent<TimedDestruction>();
+        Placementmarkercopy.AddComponent<ZNetView>();
+        timedDestruction.m_triggerOnAwake = true;
+        timedDestruction.m_timeout = 5f;
+
+        /* Add that shit to ZNetScene */
+        __instance.m_namedPrefabs.Add(Placementmarkercopy.name.GetStableHashCode(),
+            Placementmarkercopy);
+    }
+}
+
+/*[HarmonyPatch(typeof(Player), nameof(Player.OnSpawned))]
 static class PlayerOnSpawnedPatch
 {
     static void Postfix(Player __instance)
@@ -19,7 +52,7 @@ static class PlayerOnSpawnedPatch
         t.m_triggerOnAwake = true;
         t.m_timeout = 5f;
     }
-}
+}*/
 
 [HarmonyPatch(typeof(Hud), nameof(Hud.UpdateCrosshair))]
 static class PlayerUpdatePatch
@@ -44,7 +77,7 @@ static class PlayerUpdatePatch
     private const int Layer16 = 27;
     private const int Layer17 = 31;
     static int _layermask1 = 1 << Layer1;
-    static int _layermask2 = 1 << Layer2; 
+    static int _layermask2 = 1 << Layer2;
     static int _layermask3 = 1 << Layer3;
     static int _layermask4 = 1 << Layer4;
     static int _layermask5 = 1 << Layer5;
@@ -70,7 +103,7 @@ static class PlayerUpdatePatch
 
     static void Postfix(Hud __instance, Player player, float bowDrawPercentage)
     {
-        if (!ObjectPingPlugin._keyboardShortcut.Value.IsDown()) return;
+        if (!_keyboardShortcut.Value.IsDown()) return;
         _cam = GameCamera.instance.m_camera;
         if (_cam?.transform == null) return;
         Transform? transform = _cam?.transform;
@@ -78,23 +111,17 @@ static class PlayerUpdatePatch
         if (!Physics.Raycast(transform.position, transform.forward, out RaycastHit raycastHit, Mathf.Infinity,
                 _finalmask)) return;
         Vector3 point = raycastHit.point;
-        ObjectPingPlugin.ObjectPingLogger.LogDebug(
+        ObjectPingLogger.LogDebug(
             $"You targeted {raycastHit.collider.transform.root.gameObject.name.Replace("(Clone)", "")}");
         Object.Instantiate(
-            ObjectPingPlugin.Placementmarkercopy, point,
+            Placementmarkercopy, point,
             Quaternion.identity);
 
-        GameObject fetch = ZNetScene.instance.GetPrefab("vfx_sledge_hit");
-        Transform fetch2 = fetch.transform.Find("waves");
-        visualEffect = Object.Instantiate(fetch2);
+        /*GameObject fetch = ZNetScene.instance.GetPrefab("PingPrefab");
 
 
-        Transform? test = Object.Instantiate(
-            visualEffect, point,
-            Quaternion.identity);
-        test.gameObject.AddComponent<TimedDestruction>();
-        TimedDestruction? t = test.gameObject.GetComponent<TimedDestruction>();
-        t.m_triggerOnAwake = true;
-        t.m_timeout = 5f;
+        Object.Instantiate(
+            fetch, point,
+            Quaternion.identity);*/
     }
 }

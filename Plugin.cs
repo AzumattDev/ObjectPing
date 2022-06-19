@@ -27,7 +27,8 @@ namespace ObjectPing
         private static readonly ConfigSync ConfigSync = new(ModGUID)
             { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
 
-        internal static GameObject? Placementmarkercopy;
+        internal static GameObject? Placementmarkercopy = new ("PingPrefab");
+        internal static GameObject visualEffect = new("PingVisualEffect");
 
         public void Awake()
         {

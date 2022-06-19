@@ -8,6 +8,7 @@ namespace ObjectPing;
 static class ZNetScene_Awake_Patch
 {
     private static GameObject visualEffect = new("PingVisualEffect");
+    private static GameObject soundEffect = new("PingSoundEffect");
 
     static void Postfix(ZNetScene __instance)
     {
@@ -35,6 +36,21 @@ static class ZNetScene_Awake_Patch
         GameObject fetch = __instance.GetPrefab("vfx_sledge_hit");
         GameObject fetch2 = fetch.transform.Find("waves").gameObject;
         visualEffect = Object.Instantiate(fetch2, Placementmarkercopy.transform, false);
+
+        /* Clone the lootspawn sound effect and set the parent to our main GO */
+        GameObject fetchSound = __instance.GetPrefab("sfx_lootspawn");
+        soundEffect = Object.Instantiate(fetchSound, Placementmarkercopy.transform, false);
+        ZSFX audioModule = soundEffect.GetComponent<ZSFX>();
+
+        //Adjusting the audio settings to give it some cool reverb.
+        audioModule.m_minPitch = 0.8F;
+        audioModule.m_maxPitch = 0.85F;
+        audioModule.m_distanceReverb = true;
+        audioModule.m_vol = 1F;
+        audioModule.m_useCustomReverbDistance = true;
+        audioModule.m_customReverbDistance = 10F;
+        audioModule.m_delay = 1;
+        audioModule.m_time = 1;
 
         /* Add that shit to ZNetScene */
         __instance.m_namedPrefabs.Add(Placementmarkercopy.name.GetStableHashCode(),
@@ -108,7 +124,7 @@ static class PlayerUpdatePatch
         Object.Instantiate(
                 fetch, point,
                 Quaternion.identity).transform.rotation =
-            Quaternion.LookRotation(Vector3.forward, quaternion * Vector3.forward);
+            Quaternion.LookRotation(raycastHit.transform.forward, raycastHit.normal);
         ;
     }
 }

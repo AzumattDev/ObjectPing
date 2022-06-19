@@ -1,23 +1,44 @@
 ﻿using HarmonyLib;
 using UnityEngine;
+using static ObjectPing.ObjectPingPlugin;
 
 namespace ObjectPing;
 
-[HarmonyPatch(typeof(Player), nameof(Player.OnSpawned))]
-static class PlayerOnSpawnedPatch
+[HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
+static class ZNetScene_Awake_Patch
 {
-    static void Postfix(Player __instance)
+    private static GameObject visualEffect = new("PingVisualEffect");
+
+    static void Postfix(ZNetScene __instance)
     {
-        if (ObjectPingPlugin.Placementmarkercopy != null) return;
-        if (__instance.m_placementMarkerInstance == null)
-            __instance.m_placementMarkerInstance =
-                Object.Instantiate(__instance.m_placeMarker, Hud.m_instance.m_rootObject.transform);
-        ObjectPingPlugin.Placementmarkercopy = Object.Instantiate(__instance.m_placementMarkerInstance,
-            Hud.m_instance.m_rootObject.transform);
-        ObjectPingPlugin.Placementmarkercopy.AddComponent<TimedDestruction>();
-        TimedDestruction? t = ObjectPingPlugin.Placementmarkercopy.GetComponent<TimedDestruction>();
-        t.m_triggerOnAwake = true;
-        t.m_timeout = 5f;
+        GameObject container = new("PingPlacementMarker Container");
+        container.SetActive(false);
+
+        Player? p = Game.instance.m_playerPrefab.GetComponent<Player>();
+        if (p.m_placementMarkerInstance == null)
+            p.m_placementMarkerInstance =
+                Object.Instantiate(p.m_placeMarker, container.transform, false);
+
+        Placementmarkercopy = new GameObject("PingPrefab");
+        Placementmarkercopy.transform.SetParent(container.transform);
+        /* Add components to the main prefab */
+        Placementmarkercopy.AddComponent<ZNetView>();
+        TimedDestruction timedDestruction = Placementmarkercopy.AddComponent<TimedDestruction>();
+        timedDestruction.m_triggerOnAwake = true;
+        timedDestruction.m_timeout = 5f;
+
+        /* Create the marker for ping and set the parent to our main GO */
+        Object.Instantiate(p.m_placementMarkerInstance, Placementmarkercopy.transform, false).transform
+            .localPosition = Vector3.zero;
+
+        /* Clone the sledge hit for the ping visual effect and set the parent to our main GO */
+        GameObject fetch = __instance.GetPrefab("vfx_sledge_hit");
+        GameObject fetch2 = fetch.transform.Find("waves").gameObject;
+        visualEffect = Object.Instantiate(fetch2, Placementmarkercopy.transform, false);
+
+        /* Add that shit to ZNetScene */
+        __instance.m_namedPrefabs.Add(Placementmarkercopy.name.GetStableHashCode(),
+            Placementmarkercopy);
     }
 }
 
@@ -44,7 +65,7 @@ static class PlayerUpdatePatch
     private const int Layer16 = 27;
     private const int Layer17 = 31;
     static int _layermask1 = 1 << Layer1;
-    static int _layermask2 = 1 << Layer2; 
+    static int _layermask2 = 1 << Layer2;
     static int _layermask3 = 1 << Layer3;
     static int _layermask4 = 1 << Layer4;
     static int _layermask5 = 1 << Layer5;
@@ -70,7 +91,7 @@ static class PlayerUpdatePatch
 
     static void Postfix(Hud __instance, Player player, float bowDrawPercentage)
     {
-        if (!ObjectPingPlugin._keyboardShortcut.Value.IsDown()) return;
+        if (!_keyboardShortcut.Value.IsDown()) return;
         _cam = GameCamera.instance.m_camera;
         if (_cam?.transform == null) return;
         Transform? transform = _cam?.transform;
@@ -78,23 +99,16 @@ static class PlayerUpdatePatch
         if (!Physics.Raycast(transform.position, transform.forward, out RaycastHit raycastHit, Mathf.Infinity,
                 _finalmask)) return;
         Vector3 point = raycastHit.point;
-        ObjectPingPlugin.ObjectPingLogger.LogDebug(
+        ObjectPingLogger.LogDebug(
             $"You targeted {raycastHit.collider.transform.root.gameObject.name.Replace("(Clone)", "")}");
+
+        GameObject fetch = ZNetScene.instance.GetPrefab("PingPrefab");
+        Quaternion quaternion = Quaternion.Euler(0.0f, 22.5f * (float)16, 0.0f);
+
         Object.Instantiate(
-            ObjectPingPlugin.Placementmarkercopy, point,
-            Quaternion.identity);
-
-        GameObject fetch = ZNetScene.instance.GetPrefab("vfx_sledge_hit");
-        Transform fetch2 = fetch.transform.Find("waves");
-        visualEffect = Object.Instantiate(fetch2);
-
-
-        Transform? test = Object.Instantiate(
-            visualEffect, point,
-            Quaternion.identity);
-        test.gameObject.AddComponent<TimedDestruction>();
-        TimedDestruction? t = test.gameObject.GetComponent<TimedDestruction>();
-        t.m_triggerOnAwake = true;
-        t.m_timeout = 5f;
+                fetch, point,
+                Quaternion.identity).transform.rotation =
+            Quaternion.LookRotation(Vector3.forward, quaternion * Vector3.forward);
+        ;
     }
 }

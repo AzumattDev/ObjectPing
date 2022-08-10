@@ -13,7 +13,7 @@ namespace ObjectPing
     public class ObjectPingPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ObjectPing";
-        internal const string ModVersion = "2.0.0";
+        internal const string ModVersion = "2.0.1";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -34,7 +34,8 @@ namespace ObjectPing
             ConfigSync.IsLocked = true;
 
             _keyboardShortcut = config("1 - General", "Ping Keyboard Shortcut", KeyboardShortcut.Empty,
-                "Set up your keys you'd like to use to trigger the ping.", false);
+                new ConfigDescription("Set up your keys you'd like to use to trigger the ping.",
+                    new AcceptableShortcuts()), false);
 
 
             Assembly assembly = Assembly.GetExecutingAssembly();

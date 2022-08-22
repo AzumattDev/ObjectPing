@@ -27,7 +27,8 @@ namespace ObjectPing
         private static readonly ConfigSync ConfigSync = new(ModGUID)
             { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
 
-        internal static GameObject Placementmarkercopy = new("PingPrefab");
+        internal static GameObject _placementmarkercopy = null!;
+        internal static GameObject _placementmarkerContainer = null!;
 
         public void Awake()
         {
@@ -37,7 +38,8 @@ namespace ObjectPing
                 new ConfigDescription("Set up your keys you'd like to use to trigger the ping.",
                     new AcceptableShortcuts()), false);
 
-
+            _placementmarkercopy = new GameObject("PingPrefab");
+            _placementmarkerContainer = new GameObject("PingPlacementMarker Container");
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
             SetupWatcher();

@@ -12,34 +12,33 @@ static class ZNetScene_Awake_Patch
 
     static void Postfix(ZNetScene __instance)
     {
-        GameObject container = new("PingPlacementMarker Container");
-        container.SetActive(false);
+        
+        _placementmarkerContainer.SetActive(false);
 
         Player? p = Game.instance.m_playerPrefab.GetComponent<Player>();
         if (p.m_placementMarkerInstance == null)
             p.m_placementMarkerInstance =
-                Object.Instantiate(p.m_placeMarker, container.transform, false);
-
-        Placementmarkercopy = new GameObject("PingPrefab");
-        Placementmarkercopy.transform.SetParent(container.transform);
+                Object.Instantiate(p.m_placeMarker, _placementmarkerContainer.transform, false);
+        
+        _placementmarkercopy.transform.SetParent(_placementmarkerContainer.transform);
         /* Add components to the main prefab */
-        Placementmarkercopy.AddComponent<ZNetView>();
-        TimedDestruction timedDestruction = Placementmarkercopy.AddComponent<TimedDestruction>();
+        _placementmarkercopy.AddComponent<ZNetView>();
+        TimedDestruction timedDestruction = _placementmarkercopy.AddComponent<TimedDestruction>();
         timedDestruction.m_triggerOnAwake = true;
         timedDestruction.m_timeout = 5f;
 
         /* Create the marker for ping and set the parent to our main GO */
-        Object.Instantiate(p.m_placementMarkerInstance, Placementmarkercopy.transform, false).transform
+        Object.Instantiate(p.m_placementMarkerInstance, _placementmarkercopy.transform, false).transform
             .localPosition = Vector3.zero;
 
         /* Clone the sledge hit for the ping visual effect and set the parent to our main GO */
         GameObject fetch = __instance.GetPrefab("vfx_sledge_hit");
         GameObject fetch2 = fetch.transform.Find("waves").gameObject;
-        visualEffect = Object.Instantiate(fetch2, Placementmarkercopy.transform, false);
+        visualEffect = Object.Instantiate(fetch2, _placementmarkercopy.transform, false);
 
         /* Clone the lootspawn sound effect and set the parent to our main GO */
         GameObject fetchSound = __instance.GetPrefab("sfx_lootspawn");
-        soundEffect = Object.Instantiate(fetchSound, Placementmarkercopy.transform, false);
+        soundEffect = Object.Instantiate(fetchSound, _placementmarkercopy.transform, false);
         ZSFX audioModule = soundEffect.GetComponent<ZSFX>();
 
         //Adjusting the audio settings to give it some cool reverb.
@@ -53,8 +52,8 @@ static class ZNetScene_Awake_Patch
         audioModule.m_time = 1;
 
         /* Add that shit to ZNetScene */
-        __instance.m_namedPrefabs.Add(Placementmarkercopy.name.GetStableHashCode(),
-            Placementmarkercopy);
+        __instance.m_namedPrefabs.Add(_placementmarkercopy.name.GetStableHashCode(),
+            _placementmarkercopy);
     }
 }
 

@@ -13,7 +13,7 @@ namespace ObjectPing
     public class ObjectPingPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ObjectPing";
-        internal const string ModVersion = "2.0.0";
+        internal const string ModVersion = "2.0.2";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -27,16 +27,19 @@ namespace ObjectPing
         private static readonly ConfigSync ConfigSync = new(ModGUID)
             { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
 
-        internal static GameObject Placementmarkercopy = new("PingPrefab");
+        internal static GameObject _placementmarkercopy = null!;
+        internal static GameObject _placementmarkerContainer = null!;
 
         public void Awake()
         {
             ConfigSync.IsLocked = true;
 
             _keyboardShortcut = config("1 - General", "Ping Keyboard Shortcut", KeyboardShortcut.Empty,
-                "Set up your keys you'd like to use to trigger the ping.", false);
+                new ConfigDescription("Set up your keys you'd like to use to trigger the ping.",
+                    new AcceptableShortcuts()), false);
 
-
+            _placementmarkercopy = new GameObject("PingPrefab");
+            _placementmarkerContainer = new GameObject("PingPlacementMarker Container");
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
             SetupWatcher();

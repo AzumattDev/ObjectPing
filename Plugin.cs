@@ -39,7 +39,9 @@ namespace ObjectPing
                     new AcceptableShortcuts()), false);
 
             _placementmarkercopy = new GameObject("PingPrefab");
+            DontDestroyOnLoad(_placementmarkercopy);
             _placementmarkerContainer = new GameObject("PingPlacementMarker Container");
+            DontDestroyOnLoad(_placementmarkerContainer);
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
             SetupWatcher();

@@ -4,7 +4,6 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using ServerSync;
 using UnityEngine;
 
 namespace ObjectPing
@@ -13,7 +12,7 @@ namespace ObjectPing
     public class ObjectPingPlugin : BaseUnityPlugin
     {
         internal const string ModName = "ObjectPing";
-        internal const string ModVersion = "2.0.3";
+        internal const string ModVersion = "2.0.4";
         internal const string Author = "Azumatt";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -24,19 +23,14 @@ namespace ObjectPing
         public static readonly ManualLogSource ObjectPingLogger =
             BepInEx.Logging.Logger.CreateLogSource(ModName);
 
-        private static readonly ConfigSync ConfigSync = new(ModGUID)
-            { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
-
         internal static GameObject _placementmarkercopy = null!;
         internal static GameObject _placementmarkerContainer = null!;
 
         public void Awake()
         {
-            ConfigSync.IsLocked = true;
-
-            _keyboardShortcut = config("1 - General", "Ping Keyboard Shortcut", KeyboardShortcut.Empty,
+            _keyboardShortcut = Config.Bind("1 - General", "Ping Keyboard Shortcut", KeyboardShortcut.Empty,
                 new ConfigDescription("Set up your keys you'd like to use to trigger the ping.",
-                    new AcceptableShortcuts()), false);
+                    new AcceptableShortcuts()));
 
             _placementmarkercopy = new GameObject("PingPrefab");
             DontDestroyOnLoad(_placementmarkercopy);
@@ -83,35 +77,6 @@ namespace ObjectPing
 
         // private static ConfigEntry<bool> _serverConfigLocked = null!;
         internal static ConfigEntry<KeyboardShortcut> _keyboardShortcut = null!;
-
-        private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
-            bool synchronizedSetting = true)
-        {
-            ConfigDescription extendedDescription =
-                new(
-                    description.Description +
-                    (synchronizedSetting ? " [Synced with Server]" : " [Not Synced with Server]"),
-                    description.AcceptableValues, description.Tags);
-            ConfigEntry<T> configEntry = Config.Bind(group, name, value, extendedDescription);
-            //var configEntry = Config.Bind(group, name, value, description);
-
-            SyncedConfigEntry<T> syncedConfigEntry = ConfigSync.AddConfigEntry(configEntry);
-            syncedConfigEntry.SynchronizedConfig = synchronizedSetting;
-
-            return configEntry;
-        }
-
-        private ConfigEntry<T> config<T>(string group, string name, T value, string description,
-            bool synchronizedSetting = true)
-        {
-            return config(group, name, value, new ConfigDescription(description), synchronizedSetting);
-        }
-
-        private class ConfigurationManagerAttributes
-        {
-            public bool? Browsable = false;
-        }
-
         class AcceptableShortcuts : AcceptableValueBase
         {
             public AcceptableShortcuts() : base(typeof(KeyboardShortcut))

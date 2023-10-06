@@ -7,19 +7,20 @@ namespace ObjectPing;
 [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
 static class ZNetScene_Awake_Patch
 {
+    private static GameObject placementEffect = new("PingVisualEffect");
     private static GameObject visualEffect = new("PingVisualEffect");
+    private static GameObject visualEffect2 = new("PingVisualEffect2");
     private static GameObject soundEffect = new("PingSoundEffect");
 
     static void Postfix(ZNetScene __instance)
     {
-        
         _placementmarkerContainer.SetActive(false);
 
         Player? p = Game.instance.m_playerPrefab.GetComponent<Player>();
         if (p.m_placementMarkerInstance == null)
             p.m_placementMarkerInstance =
                 Object.Instantiate(p.m_placeMarker, _placementmarkerContainer.transform, false);
-        
+
         _placementmarkercopy.transform.SetParent(_placementmarkerContainer.transform);
         /* Add components to the main prefab */
         _placementmarkercopy.AddComponent<ZNetView>();
@@ -28,8 +29,10 @@ static class ZNetScene_Awake_Patch
         timedDestruction.m_timeout = 5f;
 
         /* Create the marker for ping and set the parent to our main GO */
-        Object.Instantiate(p.m_placementMarkerInstance, _placementmarkercopy.transform, false).transform
+        placementEffect = Object.Instantiate(p.m_placementMarkerInstance, _placementmarkercopy.transform, false);
+        placementEffect.transform
             .localPosition = Vector3.zero;
+        placementEffect.transform.localScale = new Vector3(10f, 10f, 10f);
 
         /* Clone the sledge hit for the ping visual effect and set the parent to our main GO */
         GameObject fetch = __instance.GetPrefab("vfx_sledge_hit");
@@ -40,6 +43,15 @@ static class ZNetScene_Awake_Patch
         GameObject fetchSound = __instance.GetPrefab("sfx_lootspawn");
         soundEffect = Object.Instantiate(fetchSound, _placementmarkercopy.transform, false);
         ZSFX audioModule = soundEffect.GetComponent<ZSFX>();
+
+        /* Clone the ward's activation effect since the flash effect isn't a prefab */
+        GameObject fetch3 = __instance.GetPrefab("fx_guardstone_activate");
+        visualEffect2 = Object.Instantiate(fetch3, _placementmarkercopy.transform, false);
+        visualEffect2.transform.localPosition = new Vector3(0f, 0f, 0f);
+        visualEffect2.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+        ParticleSystem.MainModule mainModule =
+            visualEffect2.gameObject.transform.Find("Dome").GetComponent<ParticleSystem>().main;
+        mainModule.startColor = new ParticleSystem.MinMaxGradient(Color.red);
 
         //Adjusting the audio settings to give it some cool reverb.
         audioModule.m_minPitch = 0.8F;
@@ -124,6 +136,5 @@ static class PlayerUpdatePatch
                 fetch, point,
                 Quaternion.identity).transform.rotation =
             Quaternion.LookRotation(raycastHit.transform.forward, raycastHit.normal);
-        ;
     }
 }

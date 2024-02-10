@@ -1,6 +1,6 @@
 {
     "name": "Object_Ping",
-    "version_number": "2.0.5",
+    "version_number": "2.0.6",
     "website_url": "https://discord.gg/Pb6bVMnFb2",
     "description": "Client-side mod. Ping shit for your homies. Configurable keyboard shortcut. (Empty by default)",
     "dependencies": [
